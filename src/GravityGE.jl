@@ -75,7 +75,9 @@ function gravityGE(
     E = vec(sum(X, dims=1))  # Expenditure (column sum)
     Y = vec(sum(X, dims=2))  # Income (row sum)
     D = E - Y
-    pi = X ./ transpose(repeat(E', N, 1))
+    # Share of imports from each origin country
+    # Each column j is scaled by the expenditure of destination j
+    pi = X ./ repeat(E', N, 1)
     B = beta_matrix
 
     iter = 0
@@ -90,7 +92,8 @@ function gravityGE(
 
         E = multiplicative ? (Y .+ D) .* w_hat : Y .* w_hat .+ D
 
-        pi_new = (pi .* B) .* transpose(repeat(a_matrix .* w_hat .^ (-theta), 1, N)) ./ transpose(repeat(P_hat, 1, N))
+        # Update trade shares using the current wage and price indices
+        pi_new = (pi .* B) .* repeat(a_matrix .* w_hat .^ (-theta), 1, N) ./ repeat(P_hat', N, 1)
         X = pi_new .* transpose(repeat(E', N, 1))
 
         crit = maximum(abs.(log.(X) .- log.(X_last_step)))
